@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  BapakKost
+  AnakKost
+}
+
+enum Category {
+  KamarKost
+}
+
+enum Bayar {
+  Transfer
+  Qris
+  Ewallet
+}
+
+enum StatusKamar {
+  Tersedia
+  TidakTersedia
+}
+
+enum StatusBayar {
+  Menunggu
+  SudahDibayar
+  BelumDibayar
+}
+
+model Pengguna {
+  user_id         Int         @unique @id @default(autoincrement())
+  nama_user       String      @db.VarChar(10)
+  email_user      String      @db.VarChar(100)
+  password_user   String      @db.VarChar(100)
+  nomortlp_user   String      @db.VarChar(12)
+  role_user       Role        @default(AnakKost)
+  pemesanan       Pemesanan[] // One-to-Many relationship
+}
+
+model Admin {
+  id_Admin           Int    @unique @id @default(autoincrement())
+  nama_Admin         String @db.VarChar(50)
+  email_Admin        String @db.VarChar(225)
+  password_Admin     String @db.VarChar(100)
+  nomortlp_Admin     String @db.VarChar(12)
+  role_admin         Role   @default(BapakKost)
+}
+
+model Kamar {
+  id_kamar      Int         @unique @id @default(autoincrement())
+  nomor_kamar   Int
+  harga_kamar   Int
+  kapasitas     Int
+  category      Category     @default(KamarKost)
+  status        StatusKamar  @default(Tersedia)
+  pemesanan     Pemesanan[]  // One-to-Many relationship
+}
+
+model Pemesanan {
+  id_pemesanan   Int         @id @default(autoincrement())
+  user_id        Int         @unique 
+  id_kamar       Int         @unique
+  tanggal_mulai  DateTime
+  tanggal_akhir  DateTime
+  status_booking StatusBayar @default(Menunggu)
+  pengguna       Pengguna    @relation(fields: [user_id], references: [user_id]) // Foreign key relation
+  kamar          Kamar       @relation(fields: [id_kamar], references: [id_kamar]) // Foreign key relation
+  pembayaran     Bayar? 
+}
+
+model Pembayaran {
+  id_pembayaran      Int            @id @default(autoincrement())
+  id_pemesanan       Int
+  user_id            Int            @unique
+  tanggal_pembayaran DateTime
+  metode_pembayaran  Bayar
+  status_pembayaran  StatusBayar    @default(SudahDibayar)
+}
